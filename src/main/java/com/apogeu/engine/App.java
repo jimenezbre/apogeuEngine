@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Project/Maven2/JavaApp/src/main/java/${packagePath}/${mainClassName}.java to edit this template
  */
-package com.mycompany.mavenproject1;
+package com.apogeu.engine;
 
 /**
  *
@@ -20,13 +20,13 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL11;
 
-public class Mavenproject1 {
+public class App {
 
     private long window;
     private int vaoId;
     private int vboId;
-    private String vertexShaderSource = "src/main/java/com/mycompany/mavenproject1/vertex.glsl";
-    private String fragmentShaderSource = "src/main/java/com/mycompany/mavenproject1/fragment.glsl";
+    private String vertexShaderSource = "src/main/java/com/apogeu/engine/vertex.glsl";
+    private String fragmentShaderSource = "src/main/java/com/apogeu/engine/fragment.glsl";
     float[] vertices = null;
     int[] indices = null;
     int shaderProgram;
@@ -104,8 +104,8 @@ public class Mavenproject1 {
     public void setupOpenGL() {
         // Load OBJ file
         try {
-            vertices = OBJLoader.loadOBJ("src/main/java/com/mycompany/mavenproject1/Comic.obj");
-            indices = OBJLoader.loadIndices("src/main/java/com/mycompany/mavenproject1/Comic.obj");
+            vertices = OBJLoader.loadOBJ("src/main/java/com/apogeu/engine/Comic.obj");
+            indices = OBJLoader.loadIndices("src/main/java/com/apogeu/engine/Comic.obj");
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -166,6 +166,6 @@ public class Mavenproject1 {
     }
 
     public static void main(String[] args) {
-        new Mavenproject1().run();
+        new App().run();
     }
 }

@@ -1,3 +1,5 @@
-/home/operador/NetBeansProjects/mavenproject1/src/main/java/com/mycompany/mavenproject1/Mavenproject1.java
-/home/operador/NetBeansProjects/mavenproject1/src/main/java/com/mycompany/mavenproject1/ShaderUtils.java
-/home/operador/NetBeansProjects/mavenproject1/src/main/java/com/mycompany/mavenproject1/OBJLoader.java
+/home/operador/projetos/apogeuEngine/src/main/java/com/apogeu/engine/Camera.java
+/home/operador/projetos/apogeuEngine/src/main/java/com/apogeu/engine/ShaderUtils.java
+/home/operador/projetos/apogeuEngine/src/main/java/com/apogeu/engine/CameraMovement.java
+/home/operador/projetos/apogeuEngine/src/main/java/com/apogeu/engine/App.java
+/home/operador/projetos/apogeuEngine/src/main/java/com/apogeu/engine/OBJLoader.java
