@@ -82,4 +82,19 @@ public class Camera {
     public String getPosition() {
         return String.format("Position: [%.2f, %.2f, %.2f]", position.x, position.y, position.z);
     }
+
+    public float getCameraX()
+    {
+        return position.x;
+    }
+
+    public float getCameraY()
+    {
+        return position.y;
+    }
+
+    public float getCameraZ()
+    {
+        return position.z;
+    }
 }
