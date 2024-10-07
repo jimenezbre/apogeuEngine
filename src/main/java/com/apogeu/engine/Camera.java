@@ -48,6 +48,8 @@ public class Camera {
         if (direction == CameraMovement.BACKWARD) position.sub(front.mul(velocity, new Vector3f()));
         if (direction == CameraMovement.LEFT) position.sub(right.mul(velocity, new Vector3f()));
         if (direction == CameraMovement.RIGHT) position.add(right.mul(velocity, new Vector3f()));
+        if (direction == CameraMovement.UP) position.add(up.mul(velocity, new Vector3f()));
+        if (direction == CameraMovement.DOWN) position.sub(up.mul(velocity, new Vector3f()));
     }
 
     public void processMouseMovement(float xOffset, float yOffset, boolean constrainPitch) {

@@ -10,31 +10,29 @@ import java.io.File;
  * @author operador
  */
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
+
 import org.lwjgl.opengl.GL46;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
+
 
 import com.apogeu.engine.graphics.mesh.Mesh;
+import com.apogeu.engine.graphics.text.Font;
 import com.apogeu.engine.graphics.texture.Texture;
 import com.apogeu.engine.loader.OBJLoader;
 import com.apogeu.engine.loader.TextureLoader;
 import com.apogeu.engine.scene.Grid;
+import com.apogeu.engine.utils.FPSCounter;
 import com.apogeu.engine.utils.FileChooser;
 
 
 
 public class App {
 
-    private long window;
+    private Window window;
+    static int windowWidth = 1200;
+    static int windowHeight = 800;
     private String vertexShaderSource = "src/main/java/com/apogeu/engine/vertex.glsl";
     private String fragmentShaderSource = "src/main/java/com/apogeu/engine/fragment.glsl";
     float[] vertices = null;
@@ -51,70 +49,26 @@ public class App {
     Mesh model;
     Mesh model2;
     Texture texture1;
-    Texture texture2; 
+    Texture texture2;
+    Font font;
 
     public void run() {
+        camera = new Camera(new Vector3f(0.0f, 0.0f, 3.0f), new Vector3f(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+
+        window = new Window(windowWidth, windowHeight, "Apogeu", camera);
+        window.init();
+
         init();
         loop();
-
-        GLFW.glfwDestroyWindow(window);
-        GLFW.glfwTerminate();
+        window.cleanup();
     }
 
     private void init() {
 
-        GLFWErrorCallback.createPrint(System.err).set();
-
-        if (!GLFW.glfwInit()) {
-            throw new IllegalStateException("Unable to initialize GLFW");
-        }
-
-        window = GLFW.glfwCreateWindow(800, 600, "OBJ Viewer", 0, 0);
-        if (window == 0) {
-            throw new RuntimeException("Failed to create the GLFW window");
-        }
-
-        GLFW.glfwMakeContextCurrent(window);
-        GLFW.glfwSwapInterval(1);
-        GLFW.glfwShowWindow(window);
-
-        GL.createCapabilities();
-        GL46.glEnable(GL46.GL_DEPTH_TEST);
-
         setupOpenGL();
 
         // Initialize the camera
-        camera = new Camera(new Vector3f(0.0f, 0.0f, 3.0f), new Vector3f(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
-
-        // Set up input callbacks
-        GLFW.glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
-                switch (key) {
-                    case GLFW.GLFW_KEY_W:
-                        camera.processKeyboard(CameraMovement.FORWARD, deltaTime);
-                        break;
-                    case GLFW.GLFW_KEY_S:
-                        camera.processKeyboard(CameraMovement.BACKWARD, deltaTime);
-                        break;
-                    case GLFW.GLFW_KEY_A:
-                        camera.processKeyboard(CameraMovement.LEFT, deltaTime);
-                        break;
-                    case GLFW.GLFW_KEY_D:
-                        camera.processKeyboard(CameraMovement.RIGHT, deltaTime);
-                        break;
-                }
-            }
-        });
-
-        GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
-
-        GLFW.glfwSetCursorPosCallback(window, (window, xpos, ypos) -> {
-            float xOffset = (float) xpos - lastX;
-            float yOffset = lastY - (float) ypos;
-            lastX = (float) xpos;
-            lastY = (float) ypos;
-            camera.processMouseMovement(xOffset, yOffset, true);
-        });
+        // Set up input callbacks  
     }
 
     public void setupOpenGL() {
@@ -136,19 +90,21 @@ public class App {
             System.exit(-1);
         }
 
+        font = new Font();
         shaderProgram = ShaderUtils.createShaderProgram(vertexShaderSource, fragmentShaderSource);
         GL46.glUseProgram(shaderProgram);
 
-        projectionMatrix = new Matrix4f().perspective((float) Math.toRadians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        projectionMatrix = new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) windowWidth / (float) windowHeight , 0.1f, 200.0f);
 
         Grid.initializeGrid();
     }
 
 private void loop() {
-    while (!GLFW.glfwWindowShouldClose(window)) {
-        float currentFrame = (float) GLFW.glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+    FPSCounter fpsCounter = new FPSCounter(font);
+    while (!window.shouldClose()) {
+
+      fpsCounter.update();
+
 
         // Update the view matrix
         Matrix4f viewMatrix = camera.getViewMatrix();
@@ -167,7 +123,7 @@ private void loop() {
             System.err.println("Error: 'projection' uniform not found in shader program.");
         }
 
-        GL46.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+        GL46.glClear(GL46.GL_COLOR_BUFFER_BIT | GL46.GL_DEPTH_BUFFER_BIT);
 
         // Set the light position
         int lightPosLoc = GL46.glGetUniformLocation(shaderProgram, "lightPos");
@@ -207,11 +163,12 @@ private void loop() {
         model.draw(texture1);
         model2.draw(texture2);
 
-        GLFW.glfwSwapBuffers(window);
-        GLFW.glfwPollEvents();
-    }
-}
+        fpsCounter.render( 100.0f, 100.0f, 1.0f);
 
+        window.update();
+    }
+  //  font.saveTextAsPng("hello World!!", "teste.png", 16);
+}
 
     public static void main(String[] args) {
         new App().run();
