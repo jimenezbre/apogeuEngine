@@ -4,6 +4,7 @@
  */
 package com.apogeu.engine;
 
+import java.io.File;
 /**
  *
  * @author operador
@@ -22,12 +23,18 @@ import org.lwjgl.opengl.GL46;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
+import com.apogeu.engine.graphics.mesh.Mesh;
+import com.apogeu.engine.graphics.texture.Texture;
+import com.apogeu.engine.loader.OBJLoader;
+import com.apogeu.engine.loader.TextureLoader;
+import com.apogeu.engine.scene.Grid;
+import com.apogeu.engine.utils.FileChooser;
+
+
+
 public class App {
 
     private long window;
-    int textureId = 0;
-    private int vaoId;
-    private int vboId;
     private String vertexShaderSource = "src/main/java/com/apogeu/engine/vertex.glsl";
     private String fragmentShaderSource = "src/main/java/com/apogeu/engine/fragment.glsl";
     float[] vertices = null;
@@ -41,6 +48,10 @@ public class App {
     private float lastX;
     private float lastY;
     private Matrix4f projectionMatrix;
+    Mesh model;
+    Mesh model2;
+    Texture texture1;
+    Texture texture2; 
 
     public void run() {
         init();
@@ -109,13 +120,17 @@ public class App {
     public void setupOpenGL() {
         // Load OBJ file
         OBJLoader.OBJData objData;
+        OBJLoader.OBJData objData2;
+        final File filechosen;
         try {
+            // filechosen = FileChooser.selectFile();
+            // objData = OBJLoader.loadOBJ(filechosen.getAbsolutePath());
             objData = OBJLoader.loadOBJ("src/main/java/com/apogeu/engine/Comic.obj");
-            vertices = objData.vertices;
-            textureCoords = objData.textureCoords; // Add texture coordinates
-            normals = objData.normals; // Add normals
-            indices = objData.indices;
-            textureId = loadTexture("src/main/java/com/apogeu/engine/Comic.png");
+            model = new Mesh(objData.vertices, objData.indices, objData.textureCoords, objData.normals);            
+            texture1 = Texture.loadTexture("src/main/java/com/apogeu/engine/Comic.png");
+            objData2 = OBJLoader.loadOBJ("src/main/java/com/apogeu/engine/Cube.obj");
+            texture2 = Texture.loadTexture("src/main/java/com/apogeu/engine/Cube.png");
+            model2 = new Mesh(objData2.vertices, objData2.indices, objData2.textureCoords, objData2.normals);
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -126,74 +141,8 @@ public class App {
 
         projectionMatrix = new Matrix4f().perspective((float) Math.toRadians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
-        // VAO and VBO setup
-        vaoId = GL46.glGenVertexArrays();
-        int vboId = GL46.glGenBuffers();
-        int eboId = GL46.glGenBuffers();
-
-        GL46.glBindVertexArray(vaoId);
-
-        GL46.glBindBuffer(GL46.GL_ARRAY_BUFFER, vboId);
-        GL46.glBufferData(GL46.GL_ARRAY_BUFFER, vertices, GL46.GL_STATIC_DRAW);
-
-        GL46.glVertexAttribPointer(0, 3, GL46.GL_FLOAT, false, 0, 0);
-        GL46.glEnableVertexAttribArray(0);
-
-        int texCoordVboId = GL46.glGenBuffers();
-        GL46.glBindBuffer(GL46.GL_ARRAY_BUFFER, texCoordVboId);
-        GL46.glBufferData(GL46.GL_ARRAY_BUFFER, textureCoords, GL46.GL_STATIC_DRAW);
-        GL46.glEnableVertexAttribArray(1);
-        GL46.glVertexAttribPointer(1, 2, GL46.GL_FLOAT, true,0, 0);
-
-        int normalVboId = GL46.glGenBuffers();
-        GL46.glBindBuffer(GL46.GL_ARRAY_BUFFER, normalVboId);
-        GL46.glBufferData(GL46.GL_ARRAY_BUFFER, normals, GL46.GL_STATIC_DRAW);
-        GL46.glEnableVertexAttribArray(2);
-        GL46.glVertexAttribPointer(2, 3, GL46.GL_FLOAT, false, 0, 0);
-
-        GL46.glBindBuffer(GL46.GL_ELEMENT_ARRAY_BUFFER, eboId);
-        GL46.glBufferData(GL46.GL_ELEMENT_ARRAY_BUFFER, indices, GL46.GL_STATIC_DRAW);        
-
-        GL46.glBindBuffer(GL46.GL_ARRAY_BUFFER, 0);
-        GL46.glBindVertexArray(0);
+        Grid.initializeGrid();
     }
-
-    private int loadTexture(String filePath) {
-    int textureId;
-    try (MemoryStack stack = MemoryStack.stackPush()) {
-        IntBuffer width = stack.mallocInt(1);
-        IntBuffer height = stack.mallocInt(1);
-        IntBuffer channels = stack.mallocInt(1);
-
-        STBImage.stbi_set_flip_vertically_on_load(true);
-
-        // Load image using STB
-        ByteBuffer image = STBImage.stbi_load(filePath, width, height, channels, 4);
-        if (image == null) {
-            throw new RuntimeException("Failed to load texture: " + STBImage.stbi_failure_reason());
-        }
-        textureId = GL46.glGenTextures();
-        GL46.glBindTexture(GL46.GL_TEXTURE_2D, textureId);
-
-        // Set texture parameters
-        GL46.glTexParameteri(GL46.GL_TEXTURE_2D, GL46.GL_TEXTURE_WRAP_S, GL46.GL_REPEAT);
-        GL46.glTexParameteri(GL46.GL_TEXTURE_2D, GL46.GL_TEXTURE_WRAP_T, GL46.GL_REPEAT);
-        GL46.glTexParameteri(GL46.GL_TEXTURE_2D, GL46.GL_TEXTURE_MIN_FILTER, GL46.GL_LINEAR);
-        GL46.glTexParameteri(GL46.GL_TEXTURE_2D, GL46.GL_TEXTURE_MAG_FILTER, GL46.GL_LINEAR);
-        GL46.glTexParameteri(GL46.GL_TEXTURE_2D, GL46.GL_TEXTURE_MIN_FILTER, GL46.GL_LINEAR_MIPMAP_LINEAR);
-        GL46.glTexParameteri(GL46.GL_TEXTURE_2D, GL46.GL_TEXTURE_MAG_FILTER, GL46.GL_LINEAR_MIPMAP_LINEAR);
-
-
-
-        // Upload texture data
-        GL46.glTexImage2D(GL46.GL_TEXTURE_2D, 0, GL46.GL_RGBA, width.get(0), height.get(0), 0, GL46.GL_RGBA, GL46.GL_UNSIGNED_BYTE, image);
-        GL46.glGenerateMipmap(GL46.GL_TEXTURE_2D);
-
-        // Free the image memory
-        STBImage.stbi_image_free(image);
-    }
-    return textureId;
-}
 
 private void loop() {
     while (!GLFW.glfwWindowShouldClose(window)) {
@@ -244,14 +193,6 @@ private void loop() {
             System.err.println("Error: 'lightColor' uniform not found in shader program.");
         }
 
-        // Set the object base color (if necessary)
-        // int objectColorLoc = GL46.glGetUniformLocation(shaderProgram, "objectColor");
-        // if (objectColorLoc != -1) {
-        //     GL46.glUniform3f(objectColorLoc, 1.0f, 1.0f, 1.0f);  // White object color
-        // } else {
-        //     System.err.println("Error: 'objectColor' uniform not found in shader program.");
-        // }
-
         // Set the model matrix
         Matrix4f modelMatrix = new Matrix4f().identity();
 
@@ -262,9 +203,9 @@ private void loop() {
             System.err.println("Error: 'model' uniform not found in shader program.");
         }
 
-        GL46.glBindVertexArray(vaoId);
-        GL46.glDrawElements(GL11.GL_TRIANGLES, indices.length, GL11.GL_UNSIGNED_INT, 0);
-        GL46.glBindVertexArray(0);
+        Grid.drawGrid();
+        model.draw(texture1);
+        model2.draw(texture2);
 
         GLFW.glfwSwapBuffers(window);
         GLFW.glfwPollEvents();
